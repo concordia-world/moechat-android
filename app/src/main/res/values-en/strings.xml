@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">moechat</string>
+
+    <string name="quadrant_first">Body</string>
+    <string name="quadrant_second">Knowledge</string>
+    <string name="quadrant_third">Relations</string>
+    <string name="quadrant_fourth">Possessions</string>
+
+    <string name="app_body">Physique</string>
+    <string name="app_msglist">Messages</string>
+    <string name="app_stash">Saved</string>
+    <string name="app_people">Social</string>
+    <string name="app_wallet">Assets</string>
+
+    <string name="subapp_missing_title">Sub-app %1$s is not installed</string>
+    <string name="subapp_missing_hint">Expected asset: %1$s</string>
+
+    <string name="subapp_webview_too_old_title">This WebView is too old to run sub-apps</string>
+    <string name="subapp_webview_too_old_hint">Requires document-start script injection (Chromium 105+)</string>
+</resources>

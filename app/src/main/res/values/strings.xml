@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  基准语言 = 简体中文。系统语言不在支持列表里时（如 fr-FR）回落到这里，
+  与子应用的兜底规则一致。
+
+  键名与 macOS 宿主保持一致（quadrant_* / app_* / topbar_*），
+  便于日后比对两端是否漏翻。命名用下划线：Android 资源名不允许点号。
+-->
+<resources>
+    <string name="app_name">moechat</string>
+
+    <!-- 四象限容器名（底栏） -->
+    <string name="quadrant_first">肉体</string>
+    <string name="quadrant_second">知识</string>
+    <string name="quadrant_third">关系</string>
+    <string name="quadrant_fourth">持有物</string>
+
+    <!-- 子应用名（展开态网格） -->
+    <string name="app_body">人体</string>
+    <string name="app_msglist">消息</string>
+    <string name="app_stash">收藏</string>
+    <string name="app_people">社会关系</string>
+    <string name="app_wallet">资产</string>
+
+    <!--
+      顶栏（第 0 象限）暂无文案：主体徽标与前进/后退/刷新三个按钮目前**没有行为**，
+      且「左/右按钮是浏览历史还是时间轴」在《moechat-宿主设计实现方案》§10 仍未决。
+      给无行为的控件编无障碍文案是假完成，等语义定下来再补 topbar_* 。
+    -->
+
+    <!-- 子应用未安装时的兜底页。%1$s = 子应用 id 或期望的资源路径 -->
+    <string name="subapp_missing_title">子应用 %1$s 未安装</string>
+    <string name="subapp_missing_hint">期望资源：%1$s</string>
+
+    <!-- 宿主 WebView 太旧，无法在 documentStart 注入脚本，子应用拿不到宿主上下文 -->
+    <string name="subapp_webview_too_old_title">宿主 WebView 过旧，无法运行子应用</string>
+    <string name="subapp_webview_too_old_hint">需要支持 documentStart 脚本注入的 WebView（Chromium 105 及以上）</string>
+</resources>
