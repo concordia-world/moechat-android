@@ -17,4 +17,4 @@
 ### 说明
 
 - 发布的是 **debug APK**。还没有签名密钥，release 变体产出的未签名包装了会被系统拒
-- 构建依赖 `moechat-ai/msglist` 的产物，CI 里会一并构建并放到同级目录
+- 构建依赖 `concordia-world/msglist` 的产物，CI 里会一并构建并放到同级目录

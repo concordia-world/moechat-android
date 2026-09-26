@@ -1,7 +1,7 @@
 # moechat-android
 
-[![CI](https://github.com/moechat-ai/moechat-android/actions/workflows/ci.yml/badge.svg)](https://github.com/moechat-ai/moechat-android/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/moechat-ai/moechat-android?color=blue)](https://github.com/moechat-ai/moechat-android/releases)
+[![CI](https://github.com/concordia-world/moechat-android/actions/workflows/ci.yml/badge.svg)](https://github.com/concordia-world/moechat-android/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/concordia-world/moechat-android?color=blue)](https://github.com/concordia-world/moechat-android/releases)
 
 moechat 的 Android 宿主。
 
@@ -10,7 +10,7 @@ moechat 的 Android 宿主。
 **骨架原生，子应用 Web。**
 
 - **宿主（本仓库）**：Kotlin + Compose 实现骨架——顶栏、底栏、四个象限容器、主内容区
-- **子应用**：Web 应用，跑在宿主的 WebView 里，各自独立成仓库。当前接了 [`msglist`](https://github.com/moechat-ai/msglist)（第二象限）
+- **子应用**：Web 应用，跑在宿主的 WebView 里，各自独立成仓库。当前接了 [`msglist`](https://github.com/concordia-world/msglist)（第二象限）
 
 「四端统一交互风格」靠**同一套设计规范**约束各端原生实现，而不是靠共享代码。
 
