@@ -59,7 +59,7 @@ data class HostContext(
  * 子应用 → 宿主的回调桥。
  *
  * Java 桥只能收 String，所以 JS 侧那一层的 `post(type, payload)` 由 [bootstrapScript]
- * 补上 stringify。这样四端对子应用暴露的是**同一份 JS 契约**：
+ * 补上 stringify。这样五端对子应用暴露的是**同一份 JS 契约**：
  * `window.moechatHost.post(type, payloadObject)`。
  */
 class Bridge(private val onMessage: (String, String) -> Unit) {

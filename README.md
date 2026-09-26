@@ -12,7 +12,7 @@ moechat 的 Android 宿主。
 - **宿主（本仓库）**：Kotlin + Compose 实现骨架——顶栏、底栏、四个象限容器、主内容区
 - **子应用**：Web 应用，跑在宿主的 WebView 里，各自独立成仓库。当前接了 [`msglist`](https://github.com/concordia-world/msglist)（第二象限）
 
-「四端统一交互风格」靠**同一套设计规范**约束各端原生实现，而不是靠共享代码。
+「五端统一交互风格」靠**同一套设计规范**约束各端原生实现，而不是靠共享代码。
 
 ## 已实现
 
@@ -57,7 +57,7 @@ cd ../msglist && npm install && npm run build
 子应用的 `<script type="module">` 直接不执行。
 
 宿主上下文与回调桥在 `documentStart` 注入。Android 的 `@JavascriptInterface` 只能收 String，
-所以 stringify 补在 JS 层——这样**四端对子应用暴露的是同一份契约**：
+所以 stringify 补在 JS 层——这样**五端对子应用暴露的是同一份契约**：
 
 ```js
 window.moechat                                  // 只读快照：subjectId / subjectName / spacetime / theme / locale
