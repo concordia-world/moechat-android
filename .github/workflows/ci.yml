@@ -14,7 +14,10 @@ jobs:
       #   $GITHUB_WORKSPACE/moechat-android/
       #   $GITHUB_WORKSPACE/msglist/dist/
       # app/build.gradle.kts 里读的是 ../../msglist/dist（相对 app/ 目录），
-      # 少这一层，syncSubApps 会直接抛异常。
+      # 少这一层 syncSubApps 会直接抛异常。
+      #
+      # 注意：checkout 到子目录后，每一步都要显式 cd —— run 的默认工作目录
+      # 始终是 $GITHUB_WORKSPACE，不是子目录。
       - uses: actions/checkout@v4
         with:
           path: moechat-android
@@ -33,7 +36,17 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - uses: android-actions/setup-android@v3
+      # 不引 android-actions/setup-android：它默认装已废弃的 `tools` 包，
+      # 现在的 SDK 仓库里没有这个包，会直接失败。ubuntu runner 自带
+      # ANDROID_HOME 与 sdkmanager，直接用它补齐需要的组件即可。
+      - name: 补齐 Android SDK 组件
+        run: |
+          set -x
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          SDKMGR="$(find "$SDK/cmdline-tools" -name sdkmanager -type f 2>/dev/null | head -1)"
+          test -n "$SDKMGR" || { echo "找不到 sdkmanager，SDK=$SDK" >&2; exit 1; }
+          yes 2>/dev/null | "$SDKMGR" --licenses >/dev/null 2>&1 || true
+          "$SDKMGR" "platforms;android-35" "build-tools;35.0.0" "platform-tools"
 
       - name: 构建子应用
         run: |
@@ -42,11 +55,13 @@ jobs:
           npm run build
 
       - name: 构建宿主
-        run: ./gradlew :app:assembleDebug --no-daemon
+        run: |
+          cd moechat-android
+          ./gradlew :app:assembleDebug --no-daemon
 
       - name: 上传产物
         uses: actions/upload-artifact@v4
         with:
           name: moechat-android-debug-apk
-          path: app/build/outputs/apk/debug/*.apk
+          path: moechat-android/app/build/outputs/apk/debug/*.apk
           retention-days: 14
