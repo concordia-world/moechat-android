@@ -52,14 +52,18 @@ jobs:
           cd moechat-android
           ./gradlew :app:assembleDebug --no-daemon
 
+      # 产物落在 moechat-android/ 里面，不在 $GITHUB_WORKSPACE 根上——
+      # gh release create 需要 git 仓库上下文，而 workspace 根目录没有 .git
+      # （两次 checkout 都在子目录里）。
       - name: 打包
+        working-directory: moechat-android
         run: |
-          cp moechat-android/app/build/outputs/apk/debug/app-debug.apk \
-             "$GITHUB_WORKSPACE/moechat-android-${GITHUB_REF_NAME}-debug.apk"
-          cd "$GITHUB_WORKSPACE"
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             "moechat-android-${GITHUB_REF_NAME}-debug.apk"
           sha256sum moechat-android-*.apk > SHA256SUMS
 
       - name: 发布
+        working-directory: moechat-android
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
