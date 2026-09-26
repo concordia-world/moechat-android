@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: moechat-android
+
+      - uses: actions/checkout@v4
+        with:
+          repository: moechat-ai/msglist
+          path: msglist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 构建子应用
+        run: |
+          cd msglist
+          npm ci
+          npm run build
+
+      # 0.0.1 出的是 debug APK：还没有签名密钥，release 变体产出的未签名包
+      # 装了也会被系统拒。等有 keystore 了再换 assembleRelease。
+      - name: 构建宿主
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: 打包
+        run: |
+          cp app/build/outputs/apk/debug/app-debug.apk \
+             "$GITHUB_WORKSPACE/moechat-android-${GITHUB_REF_NAME}-debug.apk"
+          cd "$GITHUB_WORKSPACE"
+          sha256sum moechat-android-*.apk > SHA256SUMS
+
+      - name: 发布
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            moechat-android-*.apk SHA256SUMS \
+            --title "$GITHUB_REF_NAME" \
+            --generate-notes

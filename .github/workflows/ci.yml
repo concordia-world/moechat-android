@@ -1,0 +1,52 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      # 两次 checkout 是为了凑出宿主构建要求的目录布局：
+      #   $GITHUB_WORKSPACE/moechat-android/
+      #   $GITHUB_WORKSPACE/msglist/dist/
+      # app/build.gradle.kts 里读的是 ../../msglist/dist（相对 app/ 目录），
+      # 少这一层，syncSubApps 会直接抛异常。
+      - uses: actions/checkout@v4
+        with:
+          path: moechat-android
+
+      - uses: actions/checkout@v4
+        with:
+          repository: moechat-ai/msglist
+          path: msglist
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: android-actions/setup-android@v3
+
+      - name: 构建子应用
+        run: |
+          cd msglist
+          npm ci
+          npm run build
+
+      - name: 构建宿主
+        run: ./gradlew :app:assembleDebug --no-daemon
+
+      - name: 上传产物
+        uses: actions/upload-artifact@v4
+        with:
+          name: moechat-android-debug-apk
+          path: app/build/outputs/apk/debug/*.apk
+          retention-days: 14
