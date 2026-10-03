@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  自适应图标（API 26+）。本项目 minSdk = 26，所以只会走这一条路径，
+  不必再提供各密度的传统 PNG 图标。
+
+  前景是「从白卡里抠出来的美术」（气泡 + 坐标针），不是整张卡片 ——
+  卡片本身就是白的，放进自适应图标里会和背景层重复，
+  而且卡片的内边距会让美术缩得比实际需要更小。
+  抠图脚本与取舍见 Resources/README.md 同级的说明。
+-->
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+    <background android:drawable="@drawable/ic_launcher_background" />
+    <foreground android:drawable="@mipmap/ic_launcher_foreground" />
+    <monochrome android:drawable="@mipmap/ic_launcher_foreground" />
+</adaptive-icon>

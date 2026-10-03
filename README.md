@@ -77,3 +77,26 @@ window.moechatHost.post(type, payloadObject)    // 回传
 推 `v*` tag 即触发 `release.yml`，产出 APK 挂到 Release 上。
 
 **产物是 debug APK**：还没有签名密钥，release 变体产出的未签名包装了会被系统拒。
+
+## 图标
+
+自适应图标（API 26+）。**本项目 `minSdk = 26`，所以只会走这一条路径**，
+不再提供各密度的传统 PNG 图标。
+
+```
+app/src/main/res/
+├── mipmap-anydpi-v26/ic_launcher.xml      自适应图标定义
+├── drawable/ic_launcher_background.xml    底色（纯白）
+└── mipmap-{m,h,xh,xxh,xxxh}dpi/ic_launcher_foreground.png
+```
+
+**前景层是「从白卡里抠出来的美术」，不是整张卡片。** 两条理由：
+
+- 卡片本身就是白的，放进自适应图标会和背景层重复
+- 卡片自带内边距，直接缩放会让美术比实际需要的更小
+
+抠图 = 从图像边框做「近白像素」的连通填充（白卡连通到边框，气泡里的眼白被气泡包围、够不到），
+再做一轮宽松阈值的二次填充吃掉抗锯齿边。
+
+**源图不在本仓库**，在 [`moechat-spec`](https://github.com/concordia-world/moechat-spec)
+的 `brand/logo/icon/`。
