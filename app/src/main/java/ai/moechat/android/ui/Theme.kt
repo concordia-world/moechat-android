@@ -61,8 +61,12 @@ object Metrics {
      */
     const val barHeight = 74
     const val barPadding = 9
-    /** 全圆角 = 高度的一半，两端半圆。 */
-    const val radiusBar = 37f
+    /**
+     * 主体容器的圆角。**不是胶囊**（不是高度的一半）——
+     * X5 底栏实测圆角约 70px = 22dp，占其 74dp 高度的 **30%**。
+     * macOS Dock 量出来也是 29%，两边一致在这个比例上。
+     */
+    const val radiusBar = 22f
 
     /**
      * 收起态四个象限容器的间距。取 X5 底栏的实测比例（图标约 52dp、间距约 32dp，
