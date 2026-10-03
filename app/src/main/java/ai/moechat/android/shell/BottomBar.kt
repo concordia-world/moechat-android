@@ -58,45 +58,39 @@ fun BottomBar(
     onTap: (Quadrant) -> Unit,
     onAppTap: (SubApp) -> Unit,
 ) {
-    Box(
+    BoxWithConstraints(
         modifier = Modifier
             .fillMaxWidth()
             // 外边距在主体容器的背景**之外**，所以这两层 padding 落在外层 Box 上
             .padding(horizontal = Metrics.shellPadding.dp)
             .padding(bottom = Metrics.barBottom.dp),
-        contentAlignment = Alignment.Center,
+        contentAlignment = Alignment.BottomCenter,
     ) {
+    // 间距优先用 containerGap；展开后容器变宽、放不下时按比例压缩，下限 containerGapMin。
+    // **余量由间距吸收，不由容器撑满来吸收** —— 那会让收起/展开变成两套排布法则。
+    val contentDp = Quadrant.entries.sumOf { q ->
+        if (q == expanded) Metrics.expandedWidth(q.gridColumns) else Metrics.collapsedHeight
+    }
+    val roomDp = maxWidth.value - Metrics.barPadding * 2
+    val gap = ((roomDp - contentDp) / 3f)
+        .coerceIn(Metrics.containerGapMin.toFloat(), Metrics.containerGap.toFloat()).dp
+
     Row(
         modifier = Modifier
-            // 收起：不给宽度约束，Row 自己贴着内容 —— 这是「不必撑满父级」的落点
-            // 展开：撑满可用宽，展开的容器变宽、其余被挤压
-            .then(if (expanded == null) Modifier else Modifier.fillMaxWidth())
-            // **主体容器的高度固定**：展开的容器向上溢出它，而不是把它撑高。
-            // 撑高会把细长条变成矮胖的圆角矩形，圆角比例（高度的 30%）和整体形状都走样。
-            //
-            // 背景用 drawBehind 自己按固定高度画，不用 background()：
-            // Row 的高度让它跟着内容走（展开时 = 100 + 内边距），背景则恒定 barHeight 贴在底部。
-            // 这样不必依赖「子视图溢出父视图」——那条路在 Compose 的约束体系里靠不住：
-            // Row 上的 height() 会把子项的 requiredHeight() 压回去，容器还是长不出来。
+            // **不给宽度约束**：收起和展开都是贴着内容 ——
+            // 主体容器跟着内容变长（宽）变宽（高），排布法则两态同一套。
             .drawBehind {
-                val h = Metrics.barHeight.dp.toPx()
                 drawRoundRect(
                     color = MoechatColors.BarSurface,
-                    topLeft = Offset(0f, size.height - h),
-                    size = Size(size.width, h),
-                    cornerRadius = CornerRadius(Metrics.radiusBar.dp.toPx()),
+                    // 圆角取**当前高度的 30%**，不是固定值 ——
+                    // 容器变高时比例才不会掉（固定 22dp 到 118 高就只剩 19%）。
+                    cornerRadius = CornerRadius(size.height * Metrics.radiusBarRatio),
                 )
             }
             .padding(Metrics.barPadding.dp),
         // 容器贴底：展开的那个往上长，收起的那三个原地不动
         verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = if (expanded == null) {
-            // 收起态用固定间距，主体容器的宽度才由内容决定
-            Arrangement.spacedBy(Metrics.containerGap.dp)
-        } else {
-            // 展开态间距要能自适应：格子宽了，均分才能把其余容器挤开
-            Arrangement.SpaceEvenly
-        },
+        horizontalArrangement = Arrangement.spacedBy(gap),
     ) {
         Quadrant.entries.forEach { quadrant ->
             val isExpanded = expanded == quadrant
