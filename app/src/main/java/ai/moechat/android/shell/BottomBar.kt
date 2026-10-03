@@ -36,11 +36,16 @@ import ai.moechat.android.ui.Metrics
 import ai.moechat.android.ui.MoechatColors
 
 /**
- * 底栏 —— 四个象限容器装在**一个半透明长容器**里。
- * 点击容器：原地放大，露出子应用网格；两侧容器被挤压让位。再点一次收起。
+ * **主体容器** —— 装主体四个象限的那个半透明长条，四个象限容器在里面。
  *
- * 外层长容器的结构照系统底栏来（华为 Mate X5 的底栏就是一个半透明长圆角容器
- * 装着若干图标），高度也对齐它。各端取各自系统的值，不强行相等。
+ * 名字的由来：第 1-2-3-4 象限本来就是**主体的**象限。
+ *
+ * 点击容器：原地放大，露出子应用网格；其余容器让位。再点一次收起。
+ * 结构与高度照系统底栏来（华为 Mate X5 的底栏就是一个半透明长圆角容器装着若干方形
+ * 图标）。各端取各自系统的值，不强行相等。
+ *
+ * **宽度不撑满父级**：收起时贴着四个容器居中；展开时才撑满可用宽 ——
+ * 那时需要空间放网格，也顺势把其余容器挤开。
  */
 @Composable
 fun BottomBar(
@@ -48,18 +53,30 @@ fun BottomBar(
     onTap: (Quadrant) -> Unit,
     onAppTap: (SubApp) -> Unit,
 ) {
-    Row(
+    Box(
         modifier = Modifier
             .fillMaxWidth()
-            // 外边距在背景**之外**，所以这两个 padding 必须在 clip/background 之前
+            // 外边距在主体容器的背景**之外**，所以这两层 padding 落在外层 Box 上
             .padding(horizontal = Metrics.shellPadding.dp)
-            .padding(bottom = Metrics.barBottom.dp)
+            .padding(bottom = Metrics.barBottom.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+    Row(
+        modifier = Modifier
+            // 收起：不给宽度约束，Row 自己贴着内容 —— 这是「不必撑满父级」的落点
+            // 展开：撑满可用宽，展开的容器变宽、其余被挤压
+            .then(if (expanded == null) Modifier else Modifier.fillMaxWidth())
             .clip(RoundedCornerShape(Metrics.radiusBar.dp))
             .background(MoechatColors.BarSurface)
             .padding(Metrics.barPadding.dp),
         verticalAlignment = Alignment.CenterVertically,
-        // 方形图标之间靠均分撑开距离（系统底栏就是这么做的），不再用固定间距
-        horizontalArrangement = Arrangement.SpaceEvenly,
+        horizontalArrangement = if (expanded == null) {
+            // 收起态用固定间距，主体容器的宽度才由内容决定
+            Arrangement.spacedBy(Metrics.containerGap.dp)
+        } else {
+            // 展开态间距要能自适应：格子宽了，均分才能把其余容器挤开
+            Arrangement.SpaceEvenly
+        },
     ) {
         Quadrant.entries.forEach { quadrant ->
             val isExpanded = expanded == quadrant
@@ -68,14 +85,8 @@ fun BottomBar(
                 isExpanded = isExpanded,
                 onTap = { onTap(quadrant) },
                 onAppTap = onAppTap,
-                // 展开态宽度由子应用数量算出，不是固定 3 倍：内容少就窄。
-                // 其余三个容器按权重平分剩下的宽度，被自然挤压。
-                // 收起态四容器等分底栏宽度（各端屏幕宽不同，只能等分）。
-                // 注意：等分在宽屏上会让收起宽超过展开宽，「点击放大」变成缩小。
-                // 需求方 2026-09-25 决定暂不处理，见 moechat-宿主设计实现方案.md §4.2。
-                // 收起态是**方形**，尺寸对齐系统底栏的图标（X5 实测 54~58dp）。
-                // 展开态按内容变宽，其余容器被 SpaceEvenly 重新均分——
-                // 这正是系统底栏「长容器里放方形图标」的观感。
+                // 收起态是**方形**，边长对齐系统底栏的图标；
+                // 展开态按内容变宽，其余容器被均分重新排开。
                 modifier = if (isExpanded) {
                     Modifier.width(Metrics.expandedWidth(quadrant.gridColumns).dp)
                 } else {
@@ -83,6 +94,7 @@ fun BottomBar(
                 },
             )
         }
+    }
     }
 }
 
