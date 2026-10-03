@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredHeight
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,6 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,10 +71,25 @@ fun BottomBar(
             // 收起：不给宽度约束，Row 自己贴着内容 —— 这是「不必撑满父级」的落点
             // 展开：撑满可用宽，展开的容器变宽、其余被挤压
             .then(if (expanded == null) Modifier else Modifier.fillMaxWidth())
-            .clip(RoundedCornerShape(Metrics.radiusBar.dp))
-            .background(MoechatColors.BarSurface)
+            // **主体容器的高度固定**：展开的容器向上溢出它，而不是把它撑高。
+            // 撑高会把细长条变成矮胖的圆角矩形，圆角比例（高度的 30%）和整体形状都走样。
+            //
+            // 背景用 drawBehind 自己按固定高度画，不用 background()：
+            // Row 的高度让它跟着内容走（展开时 = 100 + 内边距），背景则恒定 barHeight 贴在底部。
+            // 这样不必依赖「子视图溢出父视图」——那条路在 Compose 的约束体系里靠不住：
+            // Row 上的 height() 会把子项的 requiredHeight() 压回去，容器还是长不出来。
+            .drawBehind {
+                val h = Metrics.barHeight.dp.toPx()
+                drawRoundRect(
+                    color = MoechatColors.BarSurface,
+                    topLeft = Offset(0f, size.height - h),
+                    size = Size(size.width, h),
+                    cornerRadius = CornerRadius(Metrics.radiusBar.dp.toPx()),
+                )
+            }
             .padding(Metrics.barPadding.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        // 容器贴底：展开的那个往上长，收起的那三个原地不动
+        verticalAlignment = Alignment.Bottom,
         horizontalArrangement = if (expanded == null) {
             // 收起态用固定间距，主体容器的宽度才由内容决定
             Arrangement.spacedBy(Metrics.containerGap.dp)
@@ -124,7 +144,9 @@ private fun QuadrantContainer(
     Column(
         modifier = modifier
             .animateContentSize()
-            .height(height.dp)
+            // requiredHeight 而不是 height：主体容器的高度是固定的，
+            // height 会被父级约束压回去，展开的容器就长不出来了。
+            .requiredHeight(height.dp)
             .clip(shape)
             .background(if (isExpanded) quadrant.accent.copy(alpha = 0.15f) else MoechatColors.Surface)
             .border(
