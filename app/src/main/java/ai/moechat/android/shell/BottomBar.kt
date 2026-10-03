@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -25,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -36,9 +36,11 @@ import ai.moechat.android.ui.Metrics
 import ai.moechat.android.ui.MoechatColors
 
 /**
- * 底栏 —— 四个象限容器。
- * 点击容器：原地放大，露出子应用网格；两侧容器被挤压让位。
- * 再点一次收起。
+ * 底栏 —— 四个象限容器装在**一个半透明长容器**里。
+ * 点击容器：原地放大，露出子应用网格；两侧容器被挤压让位。再点一次收起。
+ *
+ * 外层长容器的结构照系统底栏来（华为 Mate X5 的底栏就是一个半透明长圆角容器
+ * 装着若干图标），高度也对齐它。各端取各自系统的值，不强行相等。
  */
 @Composable
 fun BottomBar(
@@ -49,10 +51,15 @@ fun BottomBar(
     Row(
         modifier = Modifier
             .fillMaxWidth()
+            // 外边距在背景**之外**，所以这两个 padding 必须在 clip/background 之前
             .padding(horizontal = Metrics.shellPadding.dp)
-            .padding(bottom = Metrics.barBottom.dp),
-        verticalAlignment = Alignment.Bottom,
-        horizontalArrangement = Arrangement.spacedBy(Metrics.barGap.dp),
+            .padding(bottom = Metrics.barBottom.dp)
+            .clip(RoundedCornerShape(Metrics.radiusBar.dp))
+            .background(MoechatColors.BarSurface)
+            .padding(Metrics.barPadding.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        // 方形图标之间靠均分撑开距离（系统底栏就是这么做的），不再用固定间距
+        horizontalArrangement = Arrangement.SpaceEvenly,
     ) {
         Quadrant.entries.forEach { quadrant ->
             val isExpanded = expanded == quadrant
@@ -66,10 +73,13 @@ fun BottomBar(
                 // 收起态四容器等分底栏宽度（各端屏幕宽不同，只能等分）。
                 // 注意：等分在宽屏上会让收起宽超过展开宽，「点击放大」变成缩小。
                 // 需求方 2026-09-25 决定暂不处理，见 moechat-宿主设计实现方案.md §4.2。
+                // 收起态是**方形**，尺寸对齐系统底栏的图标（X5 实测 54~58dp）。
+                // 展开态按内容变宽，其余容器被 SpaceEvenly 重新均分——
+                // 这正是系统底栏「长容器里放方形图标」的观感。
                 modifier = if (isExpanded) {
                     Modifier.width(Metrics.expandedWidth(quadrant.gridColumns).dp)
                 } else {
-                    Modifier.weight(1f)
+                    Modifier.size(Metrics.collapsedHeight.dp)
                 },
             )
         }
@@ -114,35 +124,32 @@ private fun QuadrantContainer(
             .padding(
                 if (isExpanded) Metrics.expansionPadding.dp else Metrics.collapsedPadding.dp
             ),
+        // 收起态是「缩略图在上、标签在下」的竖排，两者要对齐在同一条竖中线上。
+        // 展开态是网格，左对齐，居中会把它推到中间 —— 所以这里只影响收起态：
+        // Spacer(weight) 在展开态不存在，ExpandedGrid 自带对齐。
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if (isExpanded) {
             ExpandedGrid(quadrant, onAppTap)
         } else {
             Thumbnail(quadrant)
-            // 标签沉到底部，与 macOS 一致（靠 height(108) 撑开剩余空间）
+            // 标签沉到底部、**居中**。
             Spacer(Modifier.weight(1f))
 
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(Metrics.thumbGap.dp),
-            ) {
-                Box(
-                    Modifier
-                        .size(5.dp)
-                        .clip(CircleShape)
-                        .background(quadrant.accent)
-                )
-                Text(
-                    text = stringResource(quadrant.titleRes),
-                    fontSize = 10.5.sp,
-                    fontWeight = FontWeight.Medium,
-                    color = MoechatColors.SecondaryText,
-                    maxLines = 1,
-                    // 相邻容器展开时这里会被压窄。默认的 Clip 会把 "Possessions" 硬切成 "Poss"，
-                    // 看起来像乱码；省略号至少表明「还有字」。
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            Text(
+                text = stringResource(quadrant.titleRes),
+                fontSize = 10.5.sp,
+                fontWeight = FontWeight.Medium,
+                // 用象限色。原先文字左边有个同色小圆点，文字居中之后圆点会把居中破坏掉，
+                // 所以去掉圆点、让文字本身承担这个色彩线索。
+                color = quadrant.accent,
+                maxLines = 1,
+                // 相邻容器展开时这里会被压窄。默认的 Clip 会把 "Possessions" 硬切成 "Poss"，
+                // 看起来像乱码；省略号至少表明「还有字」。
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.fillMaxWidth(),
+            )
         }
     }
 }
@@ -155,7 +162,7 @@ private fun Thumbnail(quadrant: Quadrant) {
 
     // 收起态宽度各端自适配（按可用宽度等分），缩略图格子必须跟着收窄，
     // 否则窄屏上子应用一多就会溢出容器。maxWidth 已被容器内边距扣过。
-    BoxWithConstraints {
+    BoxWithConstraints(contentAlignment = Alignment.Center) {
         val cell = min(
             Metrics.thumbCell.dp,
             (maxWidth - Metrics.thumbGap.dp * (columns - 1)) / columns,

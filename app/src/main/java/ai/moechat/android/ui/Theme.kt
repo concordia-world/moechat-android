@@ -17,6 +17,12 @@ object MoechatColors {
     val SurfaceStroke = Color(0x1AFFFFFF)  // white 10%
     val Raised = Color(0x12FFFFFF)         // white 7%
 
+    /**
+     * 底栏外层那个半透明长容器的底。比容器自身的 Surface 亮一档 ——
+     * 两者是叠起来的（长容器 ← 象限容器），不拉开就分不出层次。
+     */
+    val BarSurface = Color(0x17FFFFFF)     // white 9%
+
     val PrimaryText = Color(0xEBFFFFFF)    // 92%
     val SecondaryText = Color(0xA8FFFFFF)  // 66%
     val TertiaryText = Color(0x6BFFFFFF)   // 42%
@@ -44,17 +50,29 @@ object MoechatColors {
 object Metrics {
     const val shellPadding = 14
     const val barGap = 8
-    const val barBottom = 26
 
-    const val radiusContainer = 26f
+    /**
+     * 底栏外层：**一个半透明长容器，四个象限容器装在里面**（参考系统底栏的结构）。
+     * 高度对齐系统底栏 —— Android 侧取华为 Mate X5 底栏的实测值 **74dp**。
+     * macOS 侧另有取值，两端不强行相等，各贴各自系统的观感。
+     */
+    const val barHeight = 74
+    const val barPadding = 9
+    /** 全圆角 = 高度的一半，两端半圆。 */
+    const val radiusBar = 37f
+
+    /** 距屏幕底。对齐 X5 底栏的实测留白 20dp。 */
+    const val barBottom = 20
+
+    const val radiusContainer = 16f
     const val radiusContainerExpanded = 30f
     const val radiusGridCell = 18f
 
-    /** 收起态高度固定，宽度由底栏等分。 */
-    const val collapsedHeight = 108
-    const val collapsedPadding = 11
-    const val thumbCell = 26
-    const val thumbGap = 5
+    /** 收起态高度 = 长容器高度减去上下内边距。宽度由底栏等分。 */
+    const val collapsedHeight = barHeight - barPadding * 2
+    const val collapsedPadding = 6
+    const val thumbCell = 20
+    const val thumbGap = 3
 
     /** 展开态：格子、间距、内边距。 */
     const val cell = 68
